@@ -1,0 +1,8 @@
+tenacity
+openai
+anthropic
+google-genai
+rich
+argcomplete
+python-dotenv
+requests

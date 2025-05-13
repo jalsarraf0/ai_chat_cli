@@ -16,24 +16,30 @@ An interactive, multi-provider AI chat CLI for OpenAI (ChatGPT), Anthropic (Clau
 
 ## Installation
 
-1. Clone the repository:
+1. **Clone the repository**:
    ```bash
-   git clone https://github.com/yourname/ai-chat-cli.git
-   cd ai-chat-cli
+   git clone https://github.com/jalsarraf0/ai_chat_cli.git
+   cd ai_chat_cli
    ```
 
-2. Create and activate a virtual environment:
+2. **Create and activate a virtual environment**:
    ```bash
    python3 -m venv .venv
    source .venv/bin/activate
    ```
 
-3. Install the package:
+3. **Install dependencies** using the provided `requirements.txt`:
+   ```bash
+   pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
+
+4. **Install the CLI tool** into your environment:
    ```bash
    pip install .
    ```
 
-4. (Optional) Enable tab-completion:
+5. **(Optional) Enable tab-completion**:
    ```bash
    activate-global-python-argcomplete --user
    ```

@@ -15,6 +15,12 @@ A **lightweight**, **pipe-friendly** CLI tool to chat with OpenAI’s ChatGPT ri
 
 ---
 
+## 🧑‍💻 Screenshot
+
+![image](https://github.com/user-attachments/assets/7e6f4cb8-d273-4161-9158-d16b8957915a)
+
+---
+
 ## 🛠️ Installation
 
 ### 1. Clone or Download

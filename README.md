@@ -1,198 +1,167 @@
-AI-Chat CLI
-============
+# 🚀 AI-Chat CLI
 
-A simple command-line tool to chat with OpenAI's ChatGPT directly from your terminal.
-
----
-
-📋 **CONTENTS**
-
-1. What is AI-Chat?
-2. Prerequisites
-3. Getting the Code
-4. Virtual Environment (Recommended)
-5. Setting Your OpenAI API Key
-6. Making the Script Executable
-7. Installing to Your PATH
-8. Verifying Installation
-9. Basic Usage
-10. Advanced Usage
-11. Troubleshooting
-12. Uninstalling
-13. FAQs
+A **lightweight**, **pipe-friendly** CLI tool to chat with OpenAI’s ChatGPT right from your terminal!  
+💻 Works on **Linux**, **macOS**, and **Windows** (PowerShell, WSL).
 
 ---
 
-1. WHAT IS AI-CHAT?
--------------------
-AI-Chat lets you send prompts to OpenAI's ChatGPT right from Bash, Zsh, Fish, PowerShell, or any shell.
+## 🎯 Why You’ll Love It
+
+- 🌟 **Minimal Setup** – No heavy dependencies, just Python & OpenAI SDK.  
+- 🔗 **Pipes & Prompts** – Send command output or type questions directly.  
+- 🤖 **System Roles** – Use `-s` to set AI’s “persona” (sysadmin, tutor, etc.).  
+- ⚡ **Real-Time Streaming** – Watch responses stream live.  
+- ☁️ **Cross-Platform** – Bash, Zsh, Fish, PowerShell – any shell!
 
 ---
 
-2. PREREQUISITES
-----------------
-- **Python 3.9+**
-- **Internet connection**
-- **OpenAI API key** (get one at https://platform.openai.com)
-- Basic terminal knowledge (copy & paste commands)
+## 🛠️ Installation
 
----
+### 1. Clone or Download
 
-3. GETTING THE CODE
--------------------
-
-**A. Git Clone** (requires Git)
+**Git Clone**  
 ```bash
 git clone https://github.com/jalsarraf0/ai_chat_cli.git
 cd ai_chat_cli
 ```
 
-**B. Download ZIP** (no Git)
-1. Go to https://github.com/jalsarraf0/ai_chat_cli  
+**Download ZIP**  
+1. Visit: https://github.com/jalsarraf0/ai_chat_cli  
 2. Click **Code → Download ZIP**  
-3. Unzip and enter folder:
+3. Unzip & enter folder:
    ```bash
    unzip ai_chat_cli-main.zip
    cd ai_chat_cli-main
    ```
 
-**C. curl / wget**
-```bash
-curl -L https://github.com/jalsarraf0/ai_chat_cli/archive/refs/heads/main.zip -o ai_chat_cli.zip
-unzip ai_chat_cli.zip
-cd ai_chat_cli-main
-```
-or
-```bash
-wget https://github.com/jalsarraf0/ai_chat_cli/archive/refs/heads/main.zip -O ai_chat_cli.zip
-unzip ai_chat_cli.zip
-cd ai_chat_cli-main
-```
-
 ---
 
-4. VIRTUAL ENVIRONMENT (RECOMMENDED)
-------------------------------------
+### 2. (Optional) Virtual Environment
+
+🔒 **Recommended** to keep things tidy.
+
 ```bash
 python3 -m venv .venv
-source .venv/bin/activate       # Linux/macOS
+source .venv/bin/activate      # Linux/macOS
 # or
-.\.venv\Scripts\Activate.ps1  # Windows PowerShell
+.\.venv\Scripts\Activate.ps1 # Windows PowerShell
 ```
 
 ---
 
-5. SETTING YOUR API KEY
------------------------
-**Linux/macOS:**  
+### 3. Install Python SDK
+
 ```bash
-echo 'export OPENAI_API_KEY="sk-..."' >> ~/.bashrc
-source ~/.bashrc
-```
-
-**Windows PowerShell:**  
-```powershell
-[Environment]::SetEnvironmentVariable('OPENAI_API_KEY','sk-...','User')
+pip install --upgrade pip
+pip install openai
 ```
 
 ---
 
-6. MAKING THE SCRIPT EXECUTABLE
--------------------------------
+### 4. Configure API Key
+
+🔑 Get your key at [OpenAI Platform](https://platform.openai.com).  
+Then:
+
+- **Linux/macOS**  
+  ```bash
+  echo 'export OPENAI_API_KEY="sk-..."' >> ~/.bashrc
+  source ~/.bashrc
+  ```
+- **Windows PowerShell**  
+  ```powershell
+  [Environment]::SetEnvironmentVariable('OPENAI_API_KEY','sk-...','User')
+  ```
+
+---
+
+### 5. Make Executable & Install
+
 ```bash
 chmod +x ai_chat_cli.py
-```
-(Windows does not require this step.)
-
----
-
-7. INSTALLING TO YOUR PATH
---------------------------
-
-**A. Using install script**  
-```bash
 ./install_ai_chat.sh
 ```
 
-**B. Manual symlink**  
+This installs `ai-chat` to `~/.local/bin`.
+
+---
+
+## 🚀 Quick Start
+
+### Ask a Question 💬
+
 ```bash
-mkdir -p ~/.local/bin
-ln -s "$(pwd)/ai_chat_cli.py" ~/.local/bin/ai-chat
-export PATH="$HOME/.local/bin:$PATH"
+ai-chat "What is the difference between TCP and UDP?"
+```
+
+### Use a System Role 🎭
+
+```bash
+ai-chat -s "You are a friendly tutor." "Explain DNS in simple terms."
+```
+
+### Pipe Command Output 🔥
+
+```bash
+df -h | (
+  echo "You are a disk expert."
+  echo
+  cat
+) | ai-chat
+```
+
+### Interactive Mode 🖥️
+
+```bash
+ai-chat
+# 👉 Type your questions, 'exit' to quit
 ```
 
 ---
 
-8. VERIFYING INSTALLATION
--------------------------
-```bash
-which ai-chat
-ai-chat --version
-```
+## ⚙️ Advanced Flags
+
+- `-s, --system` : Set AI's role  
+- `-m, --model`  : Choose GPT model (default: **gpt-4o**)  
+- `-t, --temperature`: Creativity 0.0–2.0  
+- `--raw`        : No extra blank lines  
+- `--version`    : Show version  
+
+> **Tip:** Avoid `--no-stream`; streaming mode is more reliable.
 
 ---
 
-9. BASIC USAGE
---------------
-- **Quick question:**  
-  ```bash
-  ai-chat "What is the capital of France?"
-  ```
+## 🐞 Troubleshooting
 
-- **System prompt:**  
-  ```bash
-  ai-chat -s "You are a tutor." "Explain gravity in simple terms."
-  ```
+- **Command not found:**  
+  - Ensure `~/.local/bin` is in your PATH.  
+  - Re-run `./install_ai_chat.sh`.
 
-- **Pipe output:**  
-  ```bash
-  df -h | ai-chat -s "Disk expert" --no-stream
-  ```
+- **No output?**  
+  - Remove `--no-stream`.  
+  - Wrap your prompts and data in a single piped block.
 
-- **Interactive mode:**  
-  ```bash
-  ai-chat
-  # type queries, then 'exit' to quit
-  ```
+- **API Key errors:**  
+  - Double-check `OPENAI_API_KEY` export.
 
 ---
 
-10. ADVANCED USAGE
-------------------
-- `--no-stream` : full reply at once  
-- `--raw`       : no extra blank lines  
-- `-m`          : specify model  
-- `-t`          : set temperature
+## 🧹 Uninstall
 
----
-
-11. TROUBLESHOOTING
--------------------
-- **ai-chat: command not found**  
-  Ensure `~/.local/bin` is in PATH and `ai-chat` is installed there.
-- **API key errors**  
-  Check `OPENAI_API_KEY` is set correctly.
-- **Permission denied**  
-  Run `chmod +x ai_chat_cli.py` and reinstall.
-
----
-
-12. UNINSTALLING
-----------------
 ```bash
 rm ~/.local/bin/ai-chat
 ```
 
 ---
 
-13. FAQs
--------
-**Q:** Do I need Git?  
-**A:** No—use the ZIP or curl methods.
+## 📚 FAQs
 
-**Q:** Can I skip virtualenv?  
-**A:** Yes, but it may affect other Python packages.
+**Q: Do I need Git?**  
+>A: No—use ZIP or curl methods above.
+
+**Q: Can I skip virtualenv?**  
+>A: Yes; but venv keeps Python tools isolated.
 
 ---
 
-Enjoy using AI-Chat in your terminal!
+✨ **Enjoy chatting with AI in your terminal!** ✨

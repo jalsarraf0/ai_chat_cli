@@ -1,81 +1,77 @@
-# ai-chat-cli
+# ai-chat CLI (OpenAI Edition)
 
-An interactive, multi-provider AI chat CLI for OpenAI (ChatGPT), Anthropic (Claude), and Google Gemini models.
+A simple, pipe-friendly CLI for interacting with OpenAI's Chat Completions API from any shell (Bash, Zsh, Fish, PowerShell, etc.).
 
 ## Features
 
-- **Multiple Providers**: Switch between OpenAI, Anthropic, and Google Gemini.
-- **Interactive REPL**: Chat in your terminal with streaming responses.
-- **Tab Completion**: Optional Bash/Zsh/Fish autocompletion via `argcomplete`.
-- **List Models**: Discover available model IDs with `--list-models`.
-- **No Config Files**: All configuration via environment variables or CLI flags.
-- **Retry Logic**: Automatic retries with exponential back-off for transient API errors.
-- **Provider Flexibility**: Lazy imports allow installation of only the SDKs you need.
-- **User-Friendly**: Clear error messages and debug mode (`--debug`) for tracebacks.
-- **Packaging Ready**: Install via `pip install .` and use the `ai-chat` command.
+- **Lightweight**: No extra dependencies beyond `openai`.
+- **Stdin & Positional Prompts**: Accepts piped input or direct arguments.
+- **System Role Prompts**: Use `-s/--system` to set the assistant’s role.
+- **Streaming & Raw Modes**: `--no-stream` for complete replies; `--raw` to suppress extra newlines.
+- **Interactive REPL**: Fallback when no prompt or stdin is provided.
+- **Cross-Platform**: Works on Linux, macOS, and Windows shells.
+- **Versioned**: `--version` flag for easy version checks.
 
 ## Installation
 
-1. **Clone the repository**:
+1. **Install the OpenAI SDK**:
    ```bash
-   git clone https://github.com/jalsarraf0/ai_chat_cli.git
-   cd ai_chat_cli
+   pip install --user openai
    ```
 
-2. **Create and activate a virtual environment**:
+2. **Set your API key**:
    ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate
+   export OPENAI_API_KEY="sk-..."
    ```
 
-3. **Install dependencies** using the provided `requirements.txt`:
+3. **Make the script executable and install**:
    ```bash
-   pip install --upgrade pip
-   pip install -r requirements.txt
+   chmod +x ai_chat_cli.py
+   ./install_ai_chat.sh
    ```
 
-4. **Install the CLI tool** into your environment:
-   ```bash
-   pip install .
-   ```
-
-5. **(Optional) Enable tab-completion**:
-   ```bash
-   activate-global-python-argcomplete --user
-   ```
+This installs `ai-chat` to `~/.local/bin`.
 
 ## Usage
 
-Set your API keys (replace `...` with your actual keys):
-
+### Direct prompt
 ```bash
-export OPENAI_API_KEY="sk-..."
-export ANTHROPIC_API_KEY="claude-sk-..."
-export GOOGLE_API_KEY="google-sk-..."
+ai-chat "What is the difference between a hard link and a symlink?"
 ```
 
-Run the chat CLI:
-
+### System prompt
 ```bash
-ai-chat                                   # uses default provider (openai)
-ai-chat -p openai -m gpt-4o               # specify provider and model
-ai-chat -p anthropic --list-models        # list Anthropic models
-ai-chat --no-stream                       # disable streaming output
-ai-chat --debug                           # show full tracebacks on error
+ai-chat -s "You are a blockchain advisor." "Explain peer-to-peer in simple terms."
 ```
 
-## Environment Variables
+### Piped input
+```bash
+df -h | ai-chat -s "Disk usage expert" --no-stream
+```
 
-- `OPENAI_API_KEY` — Your OpenAI API key.
-- `ANTHROPIC_API_KEY` — Your Anthropic API key.
-- `GOOGLE_API_KEY` — Your Google API key.
-- `AI_CHAT_DEFAULT_PROVIDER` — Default provider (openai, anthropic, or google).
-- `AI_CHAT_DEFAULT_MODEL` — Default model ID.
+### Interactive mode
+```bash
+ai-chat
+```
 
-## Contributing
+Type your queries, or `exit` to quit.
 
-Contributions are welcome! Feel free to open issues or submit pull requests on GitHub.
+## Flags
+
+- `-s, --system` : Set a system/role prompt.
+- `-m, --model`  : Choose model (default: gpt-4o).
+- `-t, --temperature`: Creativity level (0–2).
+- `--no-stream`: Disable streaming output.
+- `--raw`: Suppress trailing newline.
+- `--version`: Show version.
+
+## Examples
+
+```bash
+free -h | ai-chat -s "System monitor" --no-stream
+uptime | ai-chat -s "Performance guru" --no-stream
+```
 
 ## License
 
-MIT License © 2025
+MIT License – use and modify freely.

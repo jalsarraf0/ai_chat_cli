@@ -1,0 +1,16 @@
+# Core
+openai>=1.24.0
+
+# Optional but highly recommended
+argcomplete>=3.3.0     # TAB-completion helpers
+colorama>=0.4.6        # Windows/Linux colours
+
+# If you like .env files, keep this
+python-dotenv>=1.0.1
+
+# ----- Anything below this line is unused by ai_chat_cli.py -----
+# anthropic
+# google-genai
+# rich
+# requests
+# tenacity

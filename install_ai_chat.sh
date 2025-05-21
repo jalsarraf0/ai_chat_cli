@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # -----------------------------------------------------------------------------
-# 1) BOOTSTRAP: ensure python3, venv & pip exist via distro package manager
+# 1) BOOTSTRAP: ensure python3, venv & pip via distro package manager
 # -----------------------------------------------------------------------------
 install_prereqs() {
   echo "🔍 Checking for python3, venv & pip…"
@@ -16,17 +16,17 @@ install_prereqs() {
   fi
 
   echo "⚙️  Installing missing: ${missing[*]}"
-  if command -v apt-get &>/dev/null; then
+  if   command -v apt-get &>/dev/null; then
     sudo apt-get update
     sudo apt-get install -y python3 python3-venv python3-pip
-  elif command -v dnf &>/dev/null; then
+  elif command -v dnf     &>/dev/null; then
     sudo dnf install -y python3 python3-virtualenv python3-pip
-  elif command -v yum &>/dev/null; then
+  elif command -v yum     &>/dev/null; then
     sudo yum install -y python3 python3-virtualenv python3-pip
-  elif command -v apk &>/dev/null; then
+  elif command -v apk     &>/dev/null; then
     sudo apk update
     sudo apk add python3 py3-virtualenv py3-pip
-  elif command -v pacman &>/dev/null; then
+  elif command -v pacman  &>/dev/null; then
     sudo pacman -Sy --noconfirm python python-virtualenv python-pip
   else
     return 1
@@ -36,13 +36,13 @@ install_prereqs() {
 
 if ! install_prereqs; then
   cat >&2 <<EOF
-❌ Could not install python3/venv/pip automatically.
+❌ Could not auto-install python3/venv/pip.
 Please install manually, e.g.:
 
-  • Debian/Ubuntu: sudo apt-get install python3 python3-venv python3-pip
-  • RHEL/Fedora:   sudo dnf install python3 python3-virtualenv python3-pip
-  • Alpine:        sudo apk add python3 py3-virtualenv py3-pip
-  • Arch:          sudo pacman -Sy python python-virtualenv python-pip
+  • Debian/Ubuntu: sudo apt-get install python3 python3-venv python3-pip  
+  • RHEL/Fedora:   sudo dnf install python3 python3-virtualenv python3-pip  
+  • Alpine:        sudo apk add python3 py3-virtualenv py3-pip  
+  • Arch:          sudo pacman -Sy python python-virtualenv python-pip  
 
 Then re-run this installer.
 EOF
@@ -59,18 +59,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SRC="$SCRIPT_DIR/ai_chat_cli.py"
 REQ="$SCRIPT_DIR/requirements.txt"
 
-if [[ ! -f $SRC ]]; then
-  echo "❌ Missing ai_chat_cli.py in $SCRIPT_DIR" >&2
-  exit 1
-fi
-
-if [[ ! -f $REQ ]]; then
-  echo "❌ Missing requirements.txt in $SCRIPT_DIR" >&2
-  exit 1
-fi
+[[ -f $SRC ]] || { echo "❌ Missing ai_chat_cli.py in $SCRIPT_DIR" >&2; exit 1; }
+[[ -f $REQ ]] || { echo "❌ Missing requirements.txt in $SCRIPT_DIR" >&2; exit 1; }
 
 # -----------------------------------------------------------------------------
-# 3) PATH HELPER: make sure ~/.local/bin is on PATH in Bash, Zsh & Fish
+# 3) PATH HELPER: ensure ~/.local/bin in Bash, Zsh & Fish rc’s
 # -----------------------------------------------------------------------------
 ensure_path() {
   local dest="$HOME/.local/bin"
@@ -103,7 +96,7 @@ read_api_key() {
 }
 
 # -----------------------------------------------------------------------------
-# 5) INSTALL: offer global vs. virtualenv
+# 5) INSTALL: global vs. virtualenv
 # -----------------------------------------------------------------------------
 cat <<EOF
 
@@ -118,15 +111,14 @@ case "${MODE,,}" in
   g|global)
     BIN="$HOME/.local/bin"
     mkdir -p "$BIN"
-
     install -m755 "$SRC" "$BIN/ai-chat"
     echo "✅ Launcher installed to $BIN/ai-chat"
     echo
 
-    # ── Patch: ensure current session sees ~/.local/bin ───────────────────────
+    # ── Make current session see ~/.local/bin ──────────────────────────
     export PATH="$HOME/.local/bin:$PATH"
 
-    # ── Install dependencies via pip (with retry & pipx fallback) ─────────────
+    # ── pip install with retry & pipx fallback ────────────────────────
     echo "📦 Installing Python dependencies…"
     if ! "$PIP_CMD" install --user -r "$REQ"; then
       echo "⚠️ pip install failed; retrying with --break-system-packages"
@@ -145,12 +137,12 @@ case "${MODE,,}" in
       fi
     fi
 
-    # ── Ensure PATH permanence in login shells ────────────────────────────────
+    # ── Persist PATH in future shells ────────────────────────────────
     for sh in bash zsh fish; do
       ensure_path "$sh"
     done
 
-    # ── Persist API key in shell profiles ────────────────────────────────────
+    # ── Persist API key ──────────────────────────────────────────────
     echo
     read_api_key
     for prof in "$HOME/.bashrc" "$HOME/.zshrc"; do
@@ -161,12 +153,19 @@ case "${MODE,,}" in
     echo "set -Ux OPENAI_API_KEY \"$OPENAI_KEY\"" >> \
       "$HOME/.config/fish/config.fish"
 
+    # ── NEW: warn if ai-chat still not on this session’s PATH ─────────
+    if ! command -v ai-chat &>/dev/null; then
+      echo
+      echo "⚠️ ~/.local/bin is not on your current PATH."
+      echo "   To use ai-chat right now, run:"
+      echo '     export PATH="$HOME/.local/bin:$PATH"'
+    fi
+
     echo
     echo "🎉 Global installation complete!"
-    echo "   Restart your shell or run 'source ~/.bashrc', then:"
-    echo "     ai-chat \"Hello, world!\""
+    echo "   In new shells, you’ll have ai-chat automatically."
     ;;
-
+  
   v|venv)
     VENV="$SCRIPT_DIR/.venv"
     if [[ ! -d $VENV ]]; then
@@ -193,7 +192,7 @@ case "${MODE,,}" in
     echo "     source .venv/bin/activate"
     echo "     ai-chat \"Hi there!\""
     ;;
-
+  
   *)
     echo "❌ Invalid choice: enter 'g' or 'v'." >&2
     exit 1

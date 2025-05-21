@@ -63,6 +63,7 @@ if [[ ! -f $SRC ]]; then
   echo "❌ Missing ai_chat_cli.py in $SCRIPT_DIR" >&2
   exit 1
 fi
+
 if [[ ! -f $REQ ]]; then
   echo "❌ Missing requirements.txt in $SCRIPT_DIR" >&2
   exit 1
@@ -117,41 +118,48 @@ case "${MODE,,}" in
   g|global)
     BIN="$HOME/.local/bin"
     mkdir -p "$BIN"
+
     install -m755 "$SRC" "$BIN/ai-chat"
     echo "✅ Launcher installed to $BIN/ai-chat"
     echo
 
+    # ── Patch: ensure current session sees ~/.local/bin ───────────────────────
+    export PATH="$HOME/.local/bin:$PATH"
+
+    # ── Install dependencies via pip (with retry & pipx fallback) ─────────────
     echo "📦 Installing Python dependencies…"
     if ! "$PIP_CMD" install --user -r "$REQ"; then
       echo "⚠️ pip install failed; retrying with --break-system-packages"
       if ! "$PIP_CMD" install --user --break-system-packages -r "$REQ"; then
         echo "⚠️ pip (break-system) failed; falling back to pipx"
-        # bootstrap pipx
         if ! command -v pipx &>/dev/null; then
           echo "🔧 Installing pipx…"
-          "$PIP_CMD" install --user pipx || "$PIP_CMD" install --user --break-system-packages pipx
+          "$PIP_CMD" install --user pipx || \
+            "$PIP_CMD" install --user --break-system-packages pipx
           ensure_path bash && ensure_path zsh && ensure_path fish
           export PATH="$HOME/.local/bin:$PATH"
         fi
         echo "📦 Installing dependencies via pipx…"
-        pipx install --python python3 --suffix "-ai-chat" $(tr '\n' ' ' < "$REQ")
+        pipx install --python python3 --suffix "-ai-chat" \
+          $(tr '\n' ' ' < "$REQ")
       fi
     fi
 
-    # ensure PATH
+    # ── Ensure PATH permanence in login shells ────────────────────────────────
     for sh in bash zsh fish; do
       ensure_path "$sh"
     done
 
+    # ── Persist API key in shell profiles ────────────────────────────────────
     echo
     read_api_key
-    # persist key
     for prof in "$HOME/.bashrc" "$HOME/.zshrc"; do
       echo "" >> "$prof"
       echo "export OPENAI_API_KEY=\"$OPENAI_KEY\"" >> "$prof"
     done
     mkdir -p "$HOME/.config/fish"
-    echo "set -Ux OPENAI_API_KEY \"$OPENAI_KEY\"" >> "$HOME/.config/fish/config.fish"
+    echo "set -Ux OPENAI_API_KEY \"$OPENAI_KEY\"" >> \
+      "$HOME/.config/fish/config.fish"
 
     echo
     echo "🎉 Global installation complete!"
@@ -166,7 +174,6 @@ case "${MODE,,}" in
       "$PYTHON_CMD" -m venv "$VENV"
     fi
 
-    # activate & install
     # shellcheck disable=SC1090
     source "$VENV/bin/activate"
     pip install --upgrade pip
@@ -192,4 +199,3 @@ case "${MODE,,}" in
     exit 1
     ;;
 esac
-

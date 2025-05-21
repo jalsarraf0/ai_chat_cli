@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # -----------------------------------------------------------------------------
-# 1) BOOTSTRAP: install python3, venv & pip via the distro package manager
+# 1) BOOTSTRAP: ensure python3, venv & pip via distro package manager
 # -----------------------------------------------------------------------------
 install_prereqs() {
   echo "🔍 Checking for python3, venv & pip…"
@@ -50,7 +50,7 @@ EOF
 fi
 
 # -----------------------------------------------------------------------------
-# 2) SETUP: interpreters & project paths
+# 2) SETUP: locate interpreters & project paths
 # -----------------------------------------------------------------------------
 PYTHON_CMD=python3
 PIP_CMD=pip3
@@ -63,31 +63,33 @@ REQ="$SCRIPT_DIR/requirements.txt"
 [[ -f $REQ ]] || { echo "❌ Missing requirements.txt in $SCRIPT_DIR" >&2; exit 1; }
 
 # -----------------------------------------------------------------------------
-# 3) PATH HELPER: ensure ~/.local/bin is added to all login shells
+# 3) PATH HELPER: ensure ~/.local/bin in Bash, Zsh (rc+profile), Fish & sh rc’s
 # -----------------------------------------------------------------------------
 ensure_path() {
   local dest="$HOME/.local/bin"
-  local prof line
+  local profs line
 
   case "$1" in
-    bash) prof="$HOME/.bashrc"; line='export PATH="$HOME/.local/bin:$PATH"' ;;
-    zsh)  prof="$HOME/.zshrc";  line='export PATH="$HOME/.local/bin:$PATH"' ;;
-    fish) prof="$HOME/.config/fish/config.fish"; line='set -Ux fish_user_paths $HOME/.local/bin $fish_user_paths' ;;
-    sh)   prof="$HOME/.profile"; line='export PATH="$HOME/.local/bin:$PATH"' ;;
+    bash) profs=("$HOME/.bashrc") ;;
+    zsh)  profs=("$HOME/.zshrc" "$HOME/.zprofile") ;;
+    fish) profs=("$HOME/.config/fish/config.fish") ;;
+    sh)   profs=("$HOME/.profile") ;;
     *)    return ;;
   esac
 
-  mkdir -p "$(dirname "$prof")"
-  if ! grep -Fxq "$line" "$prof" 2>/dev/null; then
-    {
-      echo ""
-      echo "# Added by AI-Chat installer"
-      echo "$line"
-    } >> "$prof"
-    echo "✅ Updated PATH in $prof"
-  fi
+  line='export PATH="$HOME/.local/bin:$PATH"'
+  for prof in "${profs[@]}"; do
+    mkdir -p "$(dirname "$prof")"
+    if ! grep -Fxq "$line" "$prof" 2>/dev/null; then
+      {
+        echo ""
+        echo "# Added by AI-Chat installer"
+        echo "$line"
+      } >> "$prof"
+      echo "✅ Updated PATH in $prof"
+    fi
+  done
 
-  # For the current session
   [[ ":$PATH:" != *":$dest:"* ]] && export PATH="$dest:$PATH"
 }
 
@@ -99,7 +101,7 @@ read_api_key() {
 }
 
 # -----------------------------------------------------------------------------
-# 5) INSTALL: choose global vs. virtualenv
+# 5) INSTALL: global vs. virtualenv
 # -----------------------------------------------------------------------------
 cat <<EOF
 
@@ -118,7 +120,7 @@ case "${MODE,,}" in
     echo "✅ Launcher installed to $BIN/ai-chat"
     echo
 
-    # ensure this session can find it
+    # Make current session see ~/.local/bin
     export PATH="$HOME/.local/bin:$PATH"
 
     # pip install with retry & pipx fallback
@@ -131,39 +133,44 @@ case "${MODE,,}" in
           echo "🔧 Installing pipx…"
           "$PIP_CMD" install --user pipx || \
             "$PIP_CMD" install --user --break-system-packages pipx
+          # ensure pipx is on PATH
+          ensure_path bash && ensure_path zsh && ensure_path fish && ensure_path sh
+          export PATH="$HOME/.local/bin:$PATH"
         fi
-        # ensure pipx-installed bin on PATH
-        ensure_path bash; ensure_path zsh; ensure_path fish; ensure_path sh
         echo "📦 Installing dependencies via pipx…"
         pipx install --python python3 --suffix "-ai-chat" \
           $(tr '\n' ' ' < "$REQ")
       fi
     fi
 
-    # persist PATH in future shells (all four)
-    ensure_path bash; ensure_path zsh; ensure_path fish; ensure_path sh
+    # Persist PATH in future shells
+    for shell in bash zsh fish sh; do
+      ensure_path "$shell"
+    done
 
-    # persist API key
+    # Persist API key
     echo
     read_api_key
-    for prof in "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.profile"; do
+    # write into all relevant profiles
+    for prof in "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.zprofile" "$HOME/.profile"; do
       echo "" >> "$prof"
       echo "export OPENAI_API_KEY=\"$OPENAI_KEY\"" >> "$prof"
     done
     mkdir -p "$HOME/.config/fish"
-    echo "set -Ux OPENAI_API_KEY \"$OPENAI_KEY\"" >> "$HOME/.config/fish/config.fish"
+    echo "set -Ux OPENAI_API_KEY \"$OPENAI_KEY\"" >> \
+      "$HOME/.config/fish/config.fish"
 
-    # final reminder if current shell still can’t find it
+    # Warn if still not on PATH
     if ! command -v ai-chat &>/dev/null; then
       echo
       echo "⚠️ ~/.local/bin is still not on your current PATH."
-      echo "   To use ai-chat right now, run:"
-      echo '     source ~/.profile  # or ~/.bashrc, depending on your shell'
+      echo "   To use ai-chat now, run:"
+      echo '     export PATH="$HOME/.local/bin:$PATH"'
     fi
 
     echo
     echo "🎉 Global installation complete!"
-    echo "   Open a new shell (or source your profile) to start using ai-chat."
+    echo "   In new shells, ai-chat will be available automatically."
     ;;
 
   v|venv)
@@ -173,14 +180,12 @@ case "${MODE,,}" in
       "$PYTHON_CMD" -m venv "$VENV"
     fi
 
-    # activate & install
     # shellcheck disable=SC1090
     source "$VENV/bin/activate"
     pip install --upgrade pip
     pip install -r "$REQ"
     install -m755 "$SRC" "$VENV/bin/ai-chat"
 
-    # store API key in venv’s activate script
     echo
     read_api_key
     echo "export OPENAI_API_KEY=\"$OPENAI_KEY\"" > "$VENV/env_vars"
